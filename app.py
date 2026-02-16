@@ -1,8 +1,8 @@
 import os
-from flask import Flask, request, render_template, render_template_string, send_file, io
-from fpdf import FPDF
+import io  # io 是獨立 import 的
+from flask import Flask, request, render_template, render_template_string, send_file
 import datetime
-
+from fpdf import FPDF
 app = Flask(__name__)
 
 # 模擬官方係數 (未來可連動資料庫)
