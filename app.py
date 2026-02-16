@@ -93,17 +93,49 @@ HTML_TEMPLATE = """
 @app.route('/')
 def index():
     return render_template_string(HTML_TEMPLATE)
-
 @app.route('/download', methods=['POST'])
 def download():
-    name = request.form.get('event_name')
-    guests = int(request.form.get('guests'))
-    hours = int(request.form.get('hours'))
-    p_type = request.form.get('p_type')
-    
-    plant = PLANT_DETAILS[p_type]
-    emission = guests * hours * 0.5
-    count = int(emission / plant['sink']) + 1
+    try:
+        name = request.form.get('event_name', 'Unnamed Event')
+        guests = int(request.form.get('guests', 0))
+        hours = int(request.form.get('hours', 0))
+        p_type = request.form.get('p_type')
+        
+        plant = PLANT_DETAILS[p_type]
+        emission = guests * hours * 0.5
+        count = int(emission / plant['sink']) + 1
+
+        # 生成 PDF
+        pdf = FPDF()
+        pdf.add_page()
+        pdf.set_font("Arial", 'B', 16)
+        pdf.cell(0, 10, "Green Event Carbon Offset Proposal", ln=True, align='C')
+        pdf.ln(10)
+        
+        pdf.set_font("Arial", size=12)
+        pdf.cell(0, 10, f"Event Name: {name}", ln=True)
+        pdf.cell(0, 10, f"Estimated Emission: {emission} kg CO2e", ln=True)
+        pdf.cell(0, 10, f"Offset Strategy: {count} units of {plant['name']}", ln=True)
+        pdf.ln(10)
+        
+        pdf.set_font("Arial", 'I', 10)
+        # 修正：移除多餘的轉義符號，改用簡單字串
+        pdf.multi_cell(0, 5, f"Data Source: {plant['desc']}")
+        pdf.ln(5)
+        pdf.cell(0, 5, "Note: This is a preliminary estimate for CSR reporting.", ln=True)
+        
+        # 修正：直接使用 bytearray 輸出，避免 io 轉換錯誤
+        pdf_bytes = pdf.output() 
+        
+        return send_file(
+            io.BytesIO(pdf_bytes),
+            as_attachment=True,
+            download_name="proposal.pdf",
+            mimetype='application/pdf'
+        )
+    except Exception as e:
+        return f"Error generating PDF: {str(e)}", 500
+
 
     # 生成 PDF (目前使用英文以避免 Render 字體庫問題)
     pdf = FPDF()
