@@ -3,26 +3,18 @@ from flask import Flask, request, render_template_string
 
 app = Flask(__name__)
 
-# --- 專業科學係數設定 (嚴格保留) ---
+# --- 專業科學係數設定 ---
 COEFFICIENTS = {
-    "venue": {
-        "low": 0.2,       # 綠建築標章 / 自然通風空間
-        "standard": 0.5,  # 一般商務大樓
-        "high": 0.8       # 具備大型機具 / 舞台燈光電力
-    },
-    "transport": {
-        "mass": 0.035,    # 大眾運輸複合權重
-        "mixed": 0.12,     # 混合通勤
-        "car": 0.173       # 燃油小客車
-    },
-    "logistics": 0.35      # 3.5噸柴油貨車每公里排碳 (kg CO2e)
+    "venue": {"low": 0.2, "standard": 0.5, "high": 0.8},
+    "transport": {"mass": 0.035, "mixed": 0.12, "car": 0.173},
+    "logistics": 0.35
 }
 
 PLANTS = {
-    "none": {"name": "--- 暫不選擇 (僅產生活動碳負債) ---", "sink": 0, "desc": "純計算原始排放。"},
-    "succulent": {"name": "多肉植物 (0.1kg/年)", "sink": 0.1, "desc": "適合桌上型贈禮。"},
-    "potted": {"name": "觀葉盆栽 (0.5kg/年)", "sink": 0.5, "desc": "室內美化首選。"},
-    "seedling": {"name": "原生樹苗 (2.0kg/年)", "sink": 2.0, "desc": "最具永續價值。"}
+    "none": {"name": "--- 暫不選擇 ---", "sink": 0},
+    "succulent": {"name": "多肉植物 (0.1kg/年)", "sink": 0.1},
+    "potted": {"name": "觀葉盆栽 (0.5kg/年)", "sink": 0.5},
+    "seedling": {"name": "原生樹苗 (2.0kg/年)", "sink": 2.0}
 }
 
 HTML_TEMPLATE = """
@@ -31,27 +23,26 @@ HTML_TEMPLATE = """
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>蕨積 | 專業 ESG 永續活動試算系統</title>
+    <title>蕨積 | 永續活動碳顧問系統</title>
     <style>
         * { box-sizing: border-box; }
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #f4f7f4; padding: 15px; color: #1b4332; line-height: 1.6; margin: 0; }
+        body { font-family: -apple-system, sans-serif; background: #f4f7f4; padding: 15px; color: #1b4332; line-height: 1.6; margin: 0; }
         .container { max-width: 720px; margin: auto; }
         .card { background: white; padding: 25px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); margin-bottom: 20px; }
-        h2 { color: #2d6a4f; margin-top: 0; border-left: 5px solid #2d6a4f; padding-left: 15px; font-size: 1.4em; }
+        h2 { color: #2d6a4f; border-left: 5px solid #2d6a4f; padding-left: 15px; font-size: 1.4em; }
         .step-label { background: #2d6a4f; color: white; padding: 4px 12px; border-radius: 4px; font-size: 0.8em; font-weight: bold; }
         label { display: block; margin-top: 15px; font-weight: bold; font-size: 0.85em; }
-        select, input { width: 100%; padding: 14px; margin-top: 6px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 16px; background-color: white; -webkit-appearance: none; }
+        select, input { width: 100%; padding: 14px; margin-top: 6px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; background-color: white; -webkit-appearance: none; }
         .flex-row { display: flex; gap: 15px; }
-        @media (max-width: 600px) {
-            .flex-row { flex-direction: column; gap: 0; }
-            .card { padding: 20px; }
-            h2 { font-size: 1.2em; }
-        }
+        @media (max-width: 600px) { .flex-row { flex-direction: column; gap: 0; } }
         .debt-box { background: #fff5f5; color: #c53030; padding: 20px; border-radius: 12px; border: 1px solid #feb2b2; text-align: center; }
         .debt-val { font-size: 2.8em; font-weight: 900; display: block; line-height: 1.2; }
         .offset-box { background: #f0fff4; color: #2d6a4f; padding: 20px; border-radius: 12px; border: 1px solid #9ae6b4; margin-top: 20px; }
-        .transparency-box { background: #f8f9fa; padding: 20px; border-radius: 12px; font-size: 0.8em; color: #555; margin-top: 30px; border-left: 5px solid #adb5bd; }
-        .letter-box { background: #fff; border: 1px dashed #2d6a4f; padding: 20px; margin-top: 30px; border-radius: 12px; }
+        
+        /* 專業補充區塊 */
+        .pro-section { background: #f8f9fa; padding: 20px; border-radius: 12px; font-size: 0.85em; color: #444; margin-top: 30px; border-left: 5px solid #2d6a4f; }
+        .pro-section h3 { color: #1b4332; margin-top: 0; font-size: 1.1em; border-bottom: 1px solid #ddd; padding-bottom: 8px; }
+        .warning { color: #c53030; font-weight: bold; }
         button { width: 100%; padding: 18px; background: #2d6a4f; color: white; border: none; border-radius: 10px; font-size: 1.1em; cursor: pointer; margin-top: 25px; font-weight: bold; }
     </style>
 </head>
@@ -60,53 +51,45 @@ HTML_TEMPLATE = """
         <div class="card">
             <h2>蕨積 - 專業碳足跡試算系統</h2>
             <form method="POST">
-                <span class="step-label">1. 場域能效等級</span>
+                <span class="step-label">1. 場域與規模</span>
                 <select name="v_level">
-                    <option value="low">低耗能 (綠建築標章 / 自然通風)</option>
-                    <option value="standard" selected>標準耗能 (一般大樓中央空調)</option>
-                    <option value="high">高耗能 (具大型機具 / 舞台燈光電力)</option>
+                    <option value="low">低耗能 (綠建築 / 自然通風)</option>
+                    <option value="standard" selected>標準耗能 (一般商辦空調)</option>
+                    <option value="high">高耗能 (具大型燈光電力)</option>
                 </select>
                 <div class="flex-row">
-                    <div style="flex:1"><label>活動參與人數</label><input type="number" name="guests" value="100"></div>
-                    <div style="flex:1"><label>活動總時數 (hr)</label><input type="number" name="hours" value="3"></div>
+                    <div style="flex:1"><label>人數</label><input type="number" name="guests" value="100"></div>
+                    <div style="flex:1"><label>時數 (hr)</label><input type="number" name="hours" value="3"></div>
                 </div>
 
-                <span class="step-label" style="margin-top:20px; display:inline-block;">2. 交通排放模型</span>
+                <span class="step-label" style="margin-top:20px; display:inline-block;">2. 交通模型</span>
                 <select name="t_mode">
-                    <option value="mass">大眾運輸為主</option><option value="mixed" selected>混合運輸 (一般比例)</option><option value="car">自駕為主</option>
+                    <option value="mass">大眾運輸</option><option value="mixed" selected>混合運輸</option><option value="car">自駕為主</option>
                 </select>
-                <label>人員出席平均單程里程 (km)</label><input type="number" name="tra_km" value="15">
+                <label>平均單程里程 (km)</label><input type="number" name="tra_km" value="15">
 
-                <span class="step-label" style="margin-top:20px; display:inline-block;">3. 植物補救與物流</span>
-                <label>選擇植物類型</label>
+                <span class="step-label" style="margin-top:20px; display:inline-block;">3. 植物與物流里程</span>
                 <select name="p_type">
                     {% for k, v in plants.items() %}
                     <option value="{{ k }}">{{ v.name }}</option>
                     {% endfor %}
                 </select>
                 <div class="flex-row">
-                    <div style="flex:1"><label>抵銷年限</label>
-                        <select name="years"><option value="3" selected>3 年</option><option value="5">5 年</option></select>
-                    </div>
-                    <div style="flex:1"><label>植物運送里程(km)</label><input type="number" name="log_km" value="50"></div>
+                    <div style="flex:1"><label>抵銷年限</label><select name="years"><option value="3" selected>3 年</option><option value="5">5 年</option></select></div>
+                    <div style="flex:1"><label>物流里程(km)</label><input type="number" name="log_km" value="50"></div>
                 </div>
-
-                <button type="submit">產出科學分析結果</button>
+                <button type="submit">產出科學分析報告</button>
             </form>
         </div>
 
         {% if res %}
         <div class="card">
-            <div class="debt-box">
-                <span style="font-weight:bold; font-size:0.9em;">活動原始碳負債</span>
-                <span class="debt-val">{{ res.debt }} <small style="font-size:0.4em;">kg CO2e</small></span>
-            </div>
+            <div class="debt-box"><span class="debt-val">{{ res.debt }} <small style="font-size:0.4em;">kg</small></span>原始碳負債</div>
             {% if res.p_type != 'none' %}
             <div class="offset-box">
-                <h4 style="margin:0; border-bottom:1px solid #9ae6b4; padding-bottom:8px; font-size:1em;">🌱 蕨積「淨減碳」方案建議</h4>
-                <p style="font-size:0.9em;">動態物流排碳：<strong>{{ res.log_em }} kg</strong> (里程: {{ res.l_km }} km)</p>
-                <p style="font-size:1em;">建議採購：<strong style="font-size:1.3em;">{{ res.count }} 盆</strong> {{ res.p_name }}</p>
-                <p style="font-size:0.8em; color:#444;">💡 組合建議：{{ res.s_mix }} 盆原生樹苗 + {{ res.succ_mix }} 盆多肉植物。</p>
+                <p>物流排碳：<strong>{{ res.log_em }} kg</strong> (來回里程: {{ res.l_km*2 }} km)</p>
+                <p>建議採購：<strong style="font-size:1.3em;">{{ res.count }} 盆</strong> {{ res.p_name }}</p>
+                <p style="font-size:0.85em; opacity:0.8;">💡 建議組合：{{ res.s_mix }} 盆原生樹苗 + {{ res.succ_mix }} 盆多肉植物。</p>
             </div>
             {% endif %}
         </div>
@@ -114,20 +97,28 @@ HTML_TEMPLATE = """
 
         
 
-        <div class="transparency-box">
-            <strong>📊 數據透明度與科學依據 (Transparency Statement)：</strong><br><br>
-            1. <strong>電力排放：</strong> 參考經濟部能源署 $0.495\text{ kg CO2e/度}$ 之電力係數。<br>
-            2. <strong>交通係數：</strong> 參考環境部(MOENV)最新公告。大眾運輸 $0.035\text{ kg/km}$；燃油小客車 $0.173\text{ kg/km}$。<br>
-            3. <strong>植物固碳：</strong> 依據林業署常用樹種固碳量表均值計算。<br>
-            4. <strong>物流抵銷：</strong> 依據輸入里程計算 3.5 噸貨車之運輸足跡，確保抵銷行動之嚴謹性。
+[Image of the greenhouse gas protocol scope 1 2 and 3]
+
+
+        <div class="pro-section">
+            <h3>⚠️ 估算侷限性與專業聲明</h3>
+            <ul>
+                <li class="warning">本試算未計入餐飲、物料印刷、廢棄物處理及住宿，實際排放量可能更高。</li>
+                <li>「標準耗能」為統計均值，實際數據須依場域電表為準。</li>
+            </ul>
         </div>
 
-        <div class="letter-box">
-            <h3 style="color: #2d6a4f; margin-top:0; font-size:1.1em;">致企業專案負責人：</h3>
-            <div style="font-size: 0.9em; color: #333;">
-                <p>「蕨積」提供可經科學檢驗的抵銷計畫。透過物流里程的誠實揭露，貴司能更真實地反映碳足跡。若需要認證報告，歡迎聯繫團隊。</p>
-                <p style="text-align: right; font-weight: bold; color: #2d6a4f;">蕨積 顧問團隊 敬啟</p>
-            </div>
+        <div class="pro-section">
+            <h3>📈 正式盤查指引 (符合 ISO 標準)</h3>
+            <p>若需對外宣告，應依 <strong>ISO 14067</strong> 執行正式盤查：</p>
+            <ul>
+                <li><strong>數據收集：</strong> 索取場地電費單、發放交通問卷及統計物料重量。</li>
+                <li><strong>係數選用：</strong> 優先採用環境部(MOENV)最新係數或 Ecoinvent 資料庫。</li>
+                <li><strong>系統邊界：</strong> 應明確定義報告範圍、關鍵假設與數據品質評估。</li>
+            </ul>
+            <p style="background:#eef; padding:10px; border-radius:5px; border-left:3px solid #1b4332;">
+                「蕨積」提供符合國際標準的<b>活動碳中和計畫書</b>，歡迎聯繫我們進行深度盤查。
+            </p>
         </div>
         <div style="height:40px;"></div>
     </div>
@@ -142,19 +133,14 @@ def index():
         v_l, gs, hrs = request.form.get('v_level'), int(request.form.get('guests', 0)), int(request.form.get('hours', 3))
         t_m, t_km = request.form.get('t_mode'), float(request.form.get('tra_km', 0))
         p_t, yrs, l_km = request.form.get('p_type'), int(request.form.get('years', 3)), float(request.form.get('log_km', 50))
-
         debt = round((gs * hrs * COEFFICIENTS["venue"][v_l]) + (gs * t_km * COEFFICIENTS["transport"][t_m] * 2), 2)
-        
         if p_t != 'none':
-            log_em = round(l_km * COEFFICIENTS["logistics"] * 2, 2) # 動態里程來回
-            total_target = debt + log_em
-            count = int(total_target / (PLANTS[p_t]['sink'] * yrs)) + 1
-            s_mix = int((total_target * 0.4) / (2.0 * yrs)) + 1
-            succ_mix = int((total_target * 0.6) / (0.1 * yrs)) + 1
+            log_em = round(l_km * COEFFICIENTS["logistics"] * 2, 2)
+            total = debt + log_em
+            count = int(total / (PLANTS[p_t]['sink'] * yrs)) + 1
+            s_mix, succ_mix = int((total*0.4)/(2.0*yrs))+1, int((total*0.6)/(0.1*yrs))+1
             res = {"debt": debt, "log_em": log_em, "l_km": l_km, "p_name": PLANTS[p_t]['name'], "years": yrs, "count": count, "s_mix": s_mix, "succ_mix": succ_mix, "p_type": p_t}
-        else:
-            res = {"debt": debt, "p_type": 'none'}
-
+        else: res = {"debt": debt, "p_type": 'none'}
     return render_template_string(HTML_TEMPLATE, plants=PLANTS, res=res)
 
 if __name__ == '__main__':
