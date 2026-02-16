@@ -42,6 +42,12 @@ HTML_TEMPLATE = """
     <div class="container">
         <div class="card">
             <h2>蕨積 - 綠色活動試算顧問</h2>
+            <div class="scientific-disclaimer" style="margin-top: 40px; border-top: 1px solid #ddd; padding-top: 20px; color: #7f8c8d; font-size: 0.8em; line-height: 1.6;">
+    <strong>【專業聲明】</strong><br>
+    本試算系統旨在協助評估特定活動所衍生之額外碳源發生（範疇二、三），並提供生物固碳之補救建議。
+    須說明的是，<strong>人類日常自然活動產生之碳排遠低於全球工業與能源轉換活動。</strong><br>
+    本網頁僅就「活動轉型」提供科學試算，並非對整體工業排放之減量保證，旨在推廣綠色永續生活與企業社會責任。
+</div>
             <form method="POST">
                 <span class="step-tag">1. 活動規模</span>
                 <div style="display:flex; gap:10px;">
