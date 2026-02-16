@@ -103,10 +103,7 @@ HTML_TEMPLATE = """
         </div>
         {% endif %}
 
-        
-
-[Image of the greenhouse gas protocol scope 1 2 and 3]
-
+    
 
         <div class="pro-section">
             <h3>📊 數據透明度與係數說明</h3>
