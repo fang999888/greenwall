@@ -1,5 +1,5 @@
 import os
-from Flask import Flask, request, render_template_string
+from flask import Flask, request, render_template_string
 
 app = Flask(__name__)
 
@@ -8,7 +8,7 @@ COEFFICIENTS = {
     "venue": {"low": 0.2, "standard": 0.5, "high": 0.8},
     "transport": {"mass": 0.035, "mixed": 0.12, "car": 0.173},
     "logistics": 0.35,
-    "survival_rate": 0.8  # 預估植物存活率 (80%)，用以保守計算所需盆數
+    "survival_rate": 0.8  # 預估植物存活率 80%
 }
 
 PLANTS = {
@@ -30,11 +30,11 @@ HTML_TEMPLATE = """
         body { font-family: -apple-system, sans-serif; background: #f4f7f4; padding: 15px; color: #1b4332; line-height: 1.6; margin: 0; }
         .container { max-width: 720px; margin: auto; }
         .card { background: white; padding: 25px; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); margin-bottom: 20px; }
-        h2 { color: #2d6a4f; border-left: 5px solid #2d6a4f; padding-left: 15px; font-size: 1.3em; margin-top: 0; margin-bottom: 8px; }
-        .disclaimer { font-size: 0.8em; color: #666; background: #eee; padding: 10px; border-radius: 8px; margin-bottom: 20px; line-height: 1.4; }
+        h2 { color: #2d6a4f; border-left: 5px solid #2d6a4f; padding-left: 15px; font-size: 1.3em; margin-bottom: 8px; }
+        .disclaimer { font-size: 0.8em; color: #666; background: #eee; padding: 10px; border-radius: 8px; margin-bottom: 20px; }
         .step-label { background: #2d6a4f; color: white; padding: 4px 12px; border-radius: 4px; font-size: 0.85em; font-weight: bold; display: inline-block; }
         label { display: block; margin-top: 15px; font-weight: bold; font-size: 0.9em; }
-        input, select { width: 100%; padding: 12px; margin-top: 6px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; background-color: white; -webkit-appearance: none; }
+        input, select { width: 100%; padding: 12px; margin-top: 6px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; background: white; -webkit-appearance: none; }
         .flex-row { display: flex; gap: 15px; }
         @media (max-width: 600px) { .flex-row { flex-direction: column; gap: 0; } }
         button { width: 100%; padding: 18px; background: #2d6a4f; color: white; border: none; border-radius: 10px; font-size: 1.1em; cursor: pointer; margin-top: 25px; font-weight: bold; }
@@ -68,8 +68,8 @@ HTML_TEMPLATE = """
 
                 <span class="step-label" style="margin-top:20px;">2. 交通與物流</span>
                 <div class="flex-row">
-                    <div style="flex:1"><label>平均單程里程(km)</label><input type="number" name="tra_km" value="15"></div>
-                    <div style="flex:1"><label>植物運送里程(km)</label><input type="number" name="log_km" value="50"></div>
+                    <div style="flex:1"><label>單程里程(km)</label><input type="number" name="tra_km" value="15"></div>
+                    <div style="flex:1"><label>植物運送(km)</label><input type="number" name="log_km" value="50"></div>
                 </div>
 
                 <span class="step-label" style="margin-top:20px;">3. 抵銷計畫參數</span>
@@ -88,7 +88,6 @@ HTML_TEMPLATE = """
                     </div>
                     <div style="flex:1"><label>預估植物存活率</label><input type="text" value="80%" disabled style="background:#f9f9f9;"></div>
                 </div>
-
                 <button type="submit">產出科學分析報告</button>
             </form>
         </div>
@@ -106,30 +105,25 @@ HTML_TEMPLATE = """
         </div>
         {% endif %}
 
+        
+
         <div class="pro-section">
             <h3>📊 數據透明度與係數說明</h3>
-            1. <b>電力排放：</b> 參考能源署 $0.495\text{ kg CO2e/度}$ 之電力係數。<br>
-            2. <b>交通與物流：</b> 參考環境部公告，並計入來回運輸里程。<br>
-            3. <b>存活修正：</b> 計算已自動增加盆數，以補償預期中 20% 之自然淘汰率。
+            1. <b>電力排放：</b> 參考能源署最新電力係數，依場域等級動態加權。<br>
+            2. <b>交通與物流：</b> 參考環境部公告，小客車 $0.173\text{ kg/km}$，3.5噸貨車 $0.35\text{ kg/km}$。<br>
+            3. <b>存活修正：</b> 考量 20% 自然淘汰率，自動增加補償盆數。
         </div>
 
         <div class="pro-section">
             <h3>⚠️ 此估算的嚴重局限性</h3>
             <ul>
-                <li>未計入餐飲、物料印刷、住宿與廢棄物處理。</li>
+                <li style="color:#c53030; font-weight:bold;">未計入餐飲（尤其肉類）、印刷品、住宿與廢棄物處理。</li>
                 <li>交通與場地數據為統計均值，非實際盤查數據。</li>
                 <li>依 ISO 14067 標準，建議對參與者進行交通問卷調查，並統計物料材質與重量，以獲得具公信力之數據品質。</li>
             </ul>
         </div>
 
-        <div class="letter-box">
-            <h3 style="color: #2d6a4f; margin-top:0;">致企業專案負責人：</h3>
-            <div style="font-size: 0.9em; color: #333;">
-                <p>「蕨積」協助您將活動排碳誠實轉化為永續行動。考量到生物成長的不確定性，我們在計算中加入了<b>存活率風險係數</b>，這能讓您的碳中和計畫更具防禦力與真實感。若需 ISO 級別盤查，請聯繫我們。</p>
-                <p style="text-align: right; font-weight: bold; color: #2d6a4f;">蕨積 顧問團隊 敬啟</p>
-            </div>
-        </div>
-        <div style="height:40px;"></div>
+        
     </div>
 </body>
 </html>
@@ -143,16 +137,12 @@ def index():
         t_km, l_km = float(request.form.get('tra_km', 0)), float(request.form.get('log_km', 50))
         p_t, yrs = request.form.get('p_type'), int(request.form.get('years', 3))
         
-        # 碳負債計算
-        debt = round((gs * hrs * COEFFICIENTS["venue"][v_level]) + (gs * t_km * 0.12 * 2), 2)
-        
+        debt = round((gs * hrs * COEFFICIENTS["venue"][v_l]) + (gs * t_km * 0.12 * 2), 2)
         if p_t != 'none':
             log_em = round(l_km * COEFFICIENTS["logistics"] * 2, 2)
-            total = debt + log_em
-            # 引入存活率計算：總需求 / (單株固碳 * 年限 * 存活率)
-            survival_rate = COEFFICIENTS["survival_rate"]
-            count = int(total / (PLANTS[p_t]['sink'] * yrs * survival_rate)) + 1
-            res = {"debt": debt, "log_em": log_em, "p_name": PLANTS[p_t]['name'], "years": yrs, "count": count, "surv_rate": int(survival_rate*100), "p_type": p_t}
+            survival = COEFFICIENTS["survival_rate"]
+            count = int((debt + log_em) / (PLANTS[p_t]['sink'] * yrs * survival)) + 1
+            res = {"debt": debt, "log_em": log_em, "p_name": PLANTS[p_t]['name'], "count": count, "surv_rate": int(survival*100), "p_type": p_t}
         else: res = {"debt": debt, "p_type": 'none'}
     return render_template_string(HTML_TEMPLATE, plants=PLANTS, res=res)
 
