@@ -112,7 +112,7 @@ HTML_TEMPLATE = """
         <div class="letter-box">
             <h3 style="color: #2d6a4f; margin-top:0;">致企業負責人：</h3>
             <div style="font-size:0.95em;">
-                <p>「蕨積」致力於打破「擺放植物即中和」的迷思。我們主動揭露真實數據來源，協助您將碳債轉化為品牌長期的綠色資產。</p>
+                <p>「蕨積」致力於打破「擺放植物即中和」的迷思。「蕨積」不只是提供植物，更是提供一個**可經科學檢驗的抵銷計畫*我們主動揭露真實數據來源，協助您將碳債轉化為品牌長期的綠色資產。</p>
                 <p style="text-align: right; font-weight: bold; color: #2d6a4f;">蕨積 顧問團隊 敬啟</p>
             </div>
         </div>
@@ -123,6 +123,9 @@ HTML_TEMPLATE = """
             2. <strong>場地係數：</strong> 依據場域等級設定 $0.2 \sim 0.8\text{ kg/人/hr}$，涵蓋 HVAC 空調系統與電子設備耗能。<br>
             3. <strong>交通係數：</strong> 參考環境部(MOENV)最新公告。設定大眾與混合通勤之單人每公里碳排均值為 $0.035\text{ kg/km}$。<br>
             4. <strong>植物固碳：</strong> 參考林業署常用樹種固碳量表，基於一年期之平均生物量增量進行估算。
+            5. <strong>物流抵銷：</strong> 已包含生產基地至活動會場之運輸足跡，旨在確保抵銷行動本身不造成環境負擔。<br>
+
+            <em>註：人類活動產生之自然碳排遠低於工業活動與能源轉換。本系統僅說明碳源發生及補救辦法，旨在推廣永續轉型意識。</em>
         </div>
         <div style="height:50px;"></div>
     </div>
